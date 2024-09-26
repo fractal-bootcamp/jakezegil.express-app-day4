@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+</head>
+
+<body>
+    <h1>{{ heading }}</h1>
+
+    <form action="/submit" method="post">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" required></textarea>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if messages %}
+    <h2>Messages:</h2>
+    <ul>
+        {% for message in messages %}
+        <li>{{ message.name }}: {{ message.content }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+
+</html>
