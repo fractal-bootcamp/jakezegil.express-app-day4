@@ -12,7 +12,11 @@ function App() {
   const [name, setName] = useState("");
 
   const onFormSubmit = () => {
-    axios.post(serverURL + "/submit", { name: name, message: message });
+    axios.post(serverURL + "/submit", { name: name, message: message }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
   };
 
   useEffect(() => {

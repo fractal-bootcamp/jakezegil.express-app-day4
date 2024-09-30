@@ -1,6 +1,10 @@
 import express from "express";
 import path from "path";
 import cors from "cors";
+import { AUTH_SECRET, authenticate } from "./backend/middleware";
+import { genSalt, hash, hashSync } from "bcrypt";
+import { createHmac } from "crypto";
+import { sign } from "jsonwebtoken";
 
 const app = express();
 app.use(cors());
@@ -65,7 +69,7 @@ const injectTemplateVariables = (
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json())
+app.use(express.json());
 
 // In-memory storage for messages
 let messages: { name: string; content: string }[] = [];
@@ -92,7 +96,7 @@ app.get("/messages/:name", (req, res) => {
   res.json(messagesFromName);
 });
 
-app.get("/messages/", (req, res) => {
+app.get("/messages", (req, res) => {
   res.json(messages);
 });
 
@@ -102,6 +106,53 @@ app.post("/submit", (req, res) => {
   messages.push({ name, content: message });
 
   res.redirect("/");
+});
+
+const users = {
+  "1": {
+    name: "John",
+    password: "123456",
+  },
+  "2": {
+    name: "Jane",
+    password: "123456",
+  },
+};
+
+const generateToken = async (id: string) => {
+  const token = sign({ id }, AUTH_SECRET);
+  return token;
+};
+
+app.post("/login", async (req, res) => {
+  const { name, password } = req.body;
+
+  if (!name || !password) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  const foundEntry = Object.entries(users).find(([, user]) => user.name === name);
+  const user = foundEntry ? foundEntry[1] : undefined;
+  const id = foundEntry ? foundEntry[0] : undefined;
+  if (!id) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  
+  if (user && user.password === password) {
+    res
+      .status(200)
+      .json({ message: "Authenticated", token: await generateToken(id) });
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+});
+
+app.get("/authenticated", authenticate, (req, res) => {
+  const { name } = users[req.user.id];
+
+  res.send(name + " is authenticated");
 });
 
 app.listen(3000, () => console.log("Server running on port 3000"));
